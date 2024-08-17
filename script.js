@@ -1,8 +1,5 @@
-const SPREADSHEET_ID = '1fqHopVL2NPslUZ-_jKErXsbVO_IntUGG';
-const API_KEY = 'AIzaSyD1QnyX9WpD8Cj2lSGctK9UKIuqDNsBGws'; // Replace with your actual API key
-
 document.addEventListener('DOMContentLoaded', () => {
-    const runButton = document.getElementById('runButton');
+    const fileInput = document.getElementById('fileInput');
     const sheetSelect = document.getElementById('sheetSelect');
     const searchInput = document.getElementById('searchInput');
     const searchButton = document.getElementById('searchButton');
@@ -10,82 +7,67 @@ document.addEventListener('DOMContentLoaded', () => {
     const loading = document.getElementById('loading');
     const error = document.getElementById('error');
 
-    let sheets = [];
+    let workbook = null;
 
-    runButton.addEventListener('click', initializeApp);
+    fileInput.addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            loading.style.display = 'block';
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                try {
+                    const data = new Uint8Array(e.target.result);
+                    workbook = XLSX.read(data, {type: 'array'});
+                    populateSheetSelect(workbook);
+                    loading.style.display = 'none';
+                } catch (error) {
+                    console.error("Error reading the file:", error);
+                    displayError("Error reading the file. Please make sure it's a valid Excel file.");
+                }
+            };
+            reader.onerror = (error) => {
+                console.error("FileReader error:", error);
+                displayError("Error reading the file. Please try again.");
+            };
+            reader.readAsArrayBuffer(file);
+        }
+    });
 
-    function initializeApp() {
-        loading.style.display = 'block';
-        gapi.load('client', initializeGapiClient);
-    }
-
-    async function initializeGapiClient() {
-        await gapi.client.init({
-            apiKey: API_KEY,
-            discoveryDocs: ["https://sheets.googleapis.com/$discovery/rest?version=v4"],
+    function populateSheetSelect(workbook) {
+        sheetSelect.innerHTML = '';
+        const projectLogSheets = workbook.SheetNames.filter(name => name.startsWith('Project Log '));
+        projectLogSheets.forEach(sheetName => {
+            const option = document.createElement('option');
+            option.value = sheetName;
+            option.textContent = sheetName;
+            sheetSelect.appendChild(option);
         });
-        loadSheets();
-    }
 
-    async function loadSheets() {
-        try {
-            const response = await gapi.client.sheets.spreadsheets.get({
-                spreadsheetId: SPREADSHEET_ID
-            });
-            sheets = response.result.sheets;
-            populateSheetSelect(sheets);
-            loading.style.display = 'none';
-            sheetSelect.style.display = 'block';
-            searchInput.style.display = 'block';
-            searchButton.style.display = 'inline-block';
-            runButton.style.display = 'none';
-        } catch (err) {
-            console.error("Error loading sheets", err);
-            displayError("Error loading spreadsheet data. Please try again later.");
+        if (projectLogSheets.length > 0) {
+            sheetSelect.value = projectLogSheets[projectLogSheets.length - 1];
         }
     }
 
-    function populateSheetSelect(sheets) {
-        sheetSelect.innerHTML = '';
-        sheets.forEach(sheet => {
-            if (sheet.properties.title.startsWith('Project Log ')) {
-                const option = document.createElement('option');
-                option.value = sheet.properties.title;
-                option.textContent = sheet.properties.title;
-                sheetSelect.appendChild(option);
-            }
-        });
-    }
+    searchButton.addEventListener('click', () => {
+        if (!workbook) {
+            alert('Please select an Excel file first.');
+            return;
+        }
 
-    searchButton.addEventListener('click', handleSearch);
-
-    async function handleSearch() {
         const keywords = searchInput.value.toLowerCase().split(' ');
         const sheetName = sheetSelect.value;
-        
-        loading.style.display = 'block';
-        results.innerHTML = '';
-        error.style.display = 'none';
+        const sheet = workbook.Sheets[sheetName];
+        const data = XLSX.utils.sheet_to_json(sheet, {header: 1});
 
-        try {
-            const response = await gapi.client.sheets.spreadsheets.values.get({
-                spreadsheetId: SPREADSHEET_ID,
-                range: `${sheetName}!A:K`
-            });
-            const data = response.result.values;
-            const searchResults = data.filter((row, index) => {
-                if (index < 4 || !row[0]) return false; // Skip header rows and empty project numbers
-                const description = (row[2] || '').toString().toLowerCase();
-                const clientName = (row[3] || '').toString().toLowerCase();
-                return keywords.every(keyword => description.includes(keyword) || clientName.includes(keyword));
-            });
-            displayResults(searchResults);
-            loading.style.display = 'none';
-        } catch (err) {
-            console.error("Error fetching data", err);
-            displayError("Error fetching data. Please try again later.");
-        }
-    }
+        const searchResults = data.filter((row, index) => {
+            if (index < 4 || !row[0]) return false; // Skip header rows and empty project numbers
+            const description = (row[2] || '').toString().toLowerCase();
+            const clientName = (row[3] || '').toString().toLowerCase();
+            return keywords.every(keyword => description.includes(keyword) || clientName.includes(keyword));
+        });
+
+        displayResults(searchResults);
+    });
 
     function displayResults(searchResults) {
         results.innerHTML = `
@@ -139,4 +121,9 @@ document.addEventListener('DOMContentLoaded', () => {
         error.style.display = 'block';
         loading.style.display = 'none';
     }
+
+    // Clear file input when the page is refreshed or closed
+    window.addEventListener('beforeunload', () => {
+        fileInput.value = '';
+    });
 });
