@@ -9,6 +9,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     let workbook = null;
 
+    // Clear any previously stored data
+    localStorage.removeItem('excelFilePath');
+
     fileInput.addEventListener('change', (e) => {
         const file = e.target.files[0];
         if (file) {
@@ -20,6 +23,9 @@ document.addEventListener('DOMContentLoaded', () => {
                     workbook = XLSX.read(data, {type: 'array'});
                     populateSheetSelect(workbook);
                     loading.style.display = 'none';
+                    sheetSelect.style.display = 'block';
+                    searchInput.style.display = 'block';
+                    searchButton.style.display = 'inline-block';
                 } catch (error) {
                     console.error("Error reading the file:", error);
                     displayError("Error reading the file. Please make sure it's a valid Excel file.");
