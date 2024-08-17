@@ -1,0 +1,33 @@
+body {
+    font-family: Arial, sans-serif;
+    background-color: #121212;
+    color: #FFFFFF;
+    margin: 0;
+    padding: 20px;
+}
+.container {
+    max-width: 800px;
+    margin: 0 auto;
+}
+input, select, button {
+    display: block;
+    width: 100%;
+    margin-bottom: 10px;
+    padding: 10px;
+    box-sizing: border-box;
+}
+button {
+    background-color: #8A2BE2;
+    color: #FFFFFF;
+    border: none;
+    cursor: pointer;
+}
+#results {
+    margin-top: 20px;
+}
+.result-item {
+    background-color: #2A2A2A;
+    padding: 10px;
+    margin-bottom: 10px;
+    border-radius: 5px;
+}
