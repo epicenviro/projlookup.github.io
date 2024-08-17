@@ -25,9 +25,27 @@ button {
 #results {
     margin-top: 20px;
 }
-.result-item {
+table {
+    width: 100%;
+    border-collapse: collapse;
+}
+th, td {
+    text-align: left;
+    padding: 8px;
+    border-bottom: 1px solid #444;
+}
+th {
     background-color: #2A2A2A;
-    padding: 10px;
-    margin-bottom: 10px;
+}
+.result-row {
+    cursor: pointer;
+}
+.result-row:hover {
+    background-color: #2A2A2A;
+}
+.details {
+    background-color: #2A2A2A;
+    padding: 15px;
+    margin-top: 20px;
     border-radius: 5px;
 }
