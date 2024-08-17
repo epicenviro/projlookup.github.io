@@ -1,5 +1,5 @@
 const SPREADSHEET_ID = '1fqHopVL2NPslUZ-_jKErXsbVO_IntUGG';
-const API_KEY = 'YOUR_API_KEY'; // Replace with your actual API key
+const API_KEY = 'AIzaSyD1QnyX9WpD8Cj2lSGctK9UKIuqDNsBGws'; // Replace with your actual API key
 
 document.addEventListener('DOMContentLoaded', () => {
     const runButton = document.getElementById('runButton');
