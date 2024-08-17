@@ -1,38 +1,39 @@
 document.addEventListener('DOMContentLoaded', () => {
-    const fileInput = document.getElementById('excelFile');
     const sheetSelect = document.getElementById('sheetSelect');
     const searchInput = document.getElementById('searchInput');
     const searchButton = document.getElementById('searchButton');
     const results = document.getElementById('results');
 
+    const GOOGLE_SHEET_ID = '1fqHopVL2NPslUZ-_jKErXsbVO_IntUGG';
+    const GOOGLE_SHEET_URL = `https://docs.google.com/spreadsheets/d/${GOOGLE_SHEET_ID}/gviz/tq?tqx=out:csv`;
+
     let workbook = null;
 
-    fileInput.addEventListener('change', (e) => {
-        const file = e.target.files[0];
-        const reader = new FileReader();
-
-        reader.onload = (event) => {
-            const data = new Uint8Array(event.target.result);
-            workbook = XLSX.read(data, {type: 'array'});
+    // Load the Google Sheet
+    fetch(GOOGLE_SHEET_URL)
+        .then(response => response.text())
+        .then(data => {
+            workbook = XLSX.read(data, {type: 'string'});
             
             // Populate sheet select
             sheetSelect.innerHTML = '';
-            workbook.SheetNames.forEach(sheetName => {
-                if (sheetName.startsWith('Project Log ')) {
-                    const option = document.createElement('option');
-                    option.value = sheetName;
-                    option.textContent = sheetName;
-                    sheetSelect.appendChild(option);
-                }
+            const projectLogSheets = workbook.SheetNames.filter(name => name.startsWith('Project Log '));
+            projectLogSheets.forEach(sheetName => {
+                const option = document.createElement('option');
+                option.value = sheetName;
+                option.textContent = sheetName;
+                sheetSelect.appendChild(option);
             });
-        };
 
-        reader.readAsArrayBuffer(file);
-    });
+            // Set default to most recent year
+            if (projectLogSheets.length > 0) {
+                sheetSelect.value = projectLogSheets[projectLogSheets.length - 1];
+            }
+        });
 
     searchButton.addEventListener('click', () => {
         if (!workbook) {
-            alert('Please select an Excel file first.');
+            alert('Sheet data is still loading. Please try again in a moment.');
             return;
         }
 
@@ -64,6 +65,18 @@ document.addEventListener('DOMContentLoaded', () => {
                             <td>${row[2]}</td>
                             <td>${row[3]}</td>
                         </tr>
+                        <tr class="details-row" id="details-${index}" style="display: none;">
+                            <td colspan="3">
+                                <div class="details">
+                                    <p><strong>Client ID:</strong> ${row[4]}</p>
+                                    <p><strong>Client Contact:</strong> ${row[5]}</p>
+                                    <p><strong>Proposal 3:</strong> ${row[6]}</p>
+                                    <p><strong>PO #:</strong> ${row[7]}</p>
+                                    <p><strong>Amount Charged:</strong> ${row[8]}</p>
+                                    <p><strong>Award Date:</strong> ${row[10]}</p>
+                                </div>
+                            </td>
+                        </tr>
                     `).join('')}
                 </tbody>
             </table>
@@ -73,33 +86,13 @@ document.addEventListener('DOMContentLoaded', () => {
         document.querySelectorAll('.result-row').forEach(row => {
             row.addEventListener('click', () => {
                 const index = row.getAttribute('data-index');
-                const fullData = searchResults[index];
-                showDetails(fullData);
+                const detailsRow = document.getElementById(`details-${index}`);
+                if (detailsRow.style.display === 'none') {
+                    detailsRow.style.display = 'table-row';
+                } else {
+                    detailsRow.style.display = 'none';
+                }
             });
         });
     });
-
-    function showDetails(rowData) {
-        const detailsDiv = document.createElement('div');
-        detailsDiv.className = 'details';
-        detailsDiv.innerHTML = `
-            <h3>Project Number: ${rowData[0]}</h3>
-            <p><strong>Description:</strong> ${rowData[2]}</p>
-            <p><strong>Client Name:</strong> ${rowData[3]}</p>
-            <p><strong>Client ID:</strong> ${rowData[4]}</p>
-            <p><strong>Client Contact:</strong> ${rowData[5]}</p>
-            <p><strong>Proposal 3:</strong> ${rowData[6]}</p>
-            <p><strong>PO #:</strong> ${rowData[7]}</p>
-            <p><strong>Amount Charged:</strong> ${rowData[8]}</p>
-            <p><strong>Award Date:</strong> ${rowData[10]}</p>
-        `;
-        
-        // Remove any existing details
-        const existingDetails = document.querySelector('.details');
-        if (existingDetails) {
-            existingDetails.remove();
-        }
-        
-        results.appendChild(detailsDiv);
-    }
 });
