@@ -9,13 +9,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     let workbook = null;
 
-    // Check if there's a stored file path
-    const storedFilePath = localStorage.getItem('excelFilePath');
-    if (storedFilePath) {
-        fileInput.setAttribute('data-filepath', storedFilePath);
-        fileInput.value = storedFilePath.split('\\').pop(); // Show only the filename
-    }
-
     fileInput.addEventListener('change', (e) => {
         const file = e.target.files[0];
         if (file) {
@@ -27,9 +20,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     workbook = XLSX.read(data, {type: 'array'});
                     populateSheetSelect(workbook);
                     loading.style.display = 'none';
-                    
-                    // Store the file path
-                    localStorage.setItem('excelFilePath', fileInput.value);
                 } catch (error) {
                     console.error("Error reading the file:", error);
                     displayError("Error reading the file. Please make sure it's a valid Excel file.");
@@ -113,7 +103,6 @@ document.addEventListener('DOMContentLoaded', () => {
             </table>
         `;
 
-        // Add click event listeners to rows
         document.querySelectorAll('.result-row').forEach(row => {
             row.addEventListener('click', () => {
                 const index = row.getAttribute('data-index');
@@ -132,4 +121,9 @@ document.addEventListener('DOMContentLoaded', () => {
         error.style.display = 'block';
         loading.style.display = 'none';
     }
+
+    // Clear file input when the page is refreshed or closed
+    window.addEventListener('beforeunload', () => {
+        fileInput.value = '';
+    });
 });
