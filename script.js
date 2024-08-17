@@ -1,4 +1,5 @@
 document.addEventListener('DOMContentLoaded', () => {
+    const fileInput = document.getElementById('fileInput');
     const sheetSelect = document.getElementById('sheetSelect');
     const searchInput = document.getElementById('searchInput');
     const searchButton = document.getElementById('searchButton');
@@ -6,55 +7,60 @@ document.addEventListener('DOMContentLoaded', () => {
     const loading = document.getElementById('loading');
     const error = document.getElementById('error');
 
-    const GOOGLE_SHEET_ID = '1fqHopVL2NPslUZ-_jKErXsbVO_IntUGG';
-    const CORS_PROXY = "https://cors-anywhere.herokuapp.com/";
-    const GOOGLE_SHEET_URL = `${CORS_PROXY}https://docs.google.com/spreadsheets/d/${GOOGLE_SHEET_ID}/export?format=csv`;
-
     let workbook = null;
 
-    // Load the Google Sheet
-    loading.style.display = 'block';
-    fetch(GOOGLE_SHEET_URL)
-        .then(response => {
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-            const contentType = response.headers.get("content-type");
-            if (contentType && contentType.includes("text/html")) {
-                throw new Error("Received HTML instead of CSV. The spreadsheet might not be accessible.");
-            }
-            return response.text();
-        })
-        .then(data => {
-            workbook = XLSX.read(data, {type: 'string'});
-            
-            // Populate sheet select
-            sheetSelect.innerHTML = '';
-            const projectLogSheets = workbook.SheetNames.filter(name => name.startsWith('Project Log '));
-            projectLogSheets.forEach(sheetName => {
-                const option = document.createElement('option');
-                option.value = sheetName;
-                option.textContent = sheetName;
-                sheetSelect.appendChild(option);
-            });
+    // Check if there's a stored file path
+    const storedFilePath = localStorage.getItem('excelFilePath');
+    if (storedFilePath) {
+        fileInput.setAttribute('data-filepath', storedFilePath);
+        fileInput.value = storedFilePath.split('\\').pop(); // Show only the filename
+    }
 
-            // Set default to most recent year
-            if (projectLogSheets.length > 0) {
-                sheetSelect.value = projectLogSheets[projectLogSheets.length - 1];
-            }
+    fileInput.addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            loading.style.display = 'block';
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                try {
+                    const data = new Uint8Array(e.target.result);
+                    workbook = XLSX.read(data, {type: 'array'});
+                    populateSheetSelect(workbook);
+                    loading.style.display = 'none';
+                    
+                    // Store the file path
+                    localStorage.setItem('excelFilePath', fileInput.value);
+                } catch (error) {
+                    console.error("Error reading the file:", error);
+                    displayError("Error reading the file. Please make sure it's a valid Excel file.");
+                }
+            };
+            reader.onerror = (error) => {
+                console.error("FileReader error:", error);
+                displayError("Error reading the file. Please try again.");
+            };
+            reader.readAsArrayBuffer(file);
+        }
+    });
 
-            loading.style.display = 'none';
-        })
-        .catch(e => {
-            console.error("There was a problem fetching the spreadsheet data:", e);
-            error.textContent = "There was a problem loading the data. Please try again later.";
-            error.style.display = 'block';
-            loading.style.display = 'none';
+    function populateSheetSelect(workbook) {
+        sheetSelect.innerHTML = '';
+        const projectLogSheets = workbook.SheetNames.filter(name => name.startsWith('Project Log '));
+        projectLogSheets.forEach(sheetName => {
+            const option = document.createElement('option');
+            option.value = sheetName;
+            option.textContent = sheetName;
+            sheetSelect.appendChild(option);
         });
+
+        if (projectLogSheets.length > 0) {
+            sheetSelect.value = projectLogSheets[projectLogSheets.length - 1];
+        }
+    }
 
     searchButton.addEventListener('click', () => {
         if (!workbook) {
-            alert('Sheet data is still loading. Please try again in a moment.');
+            alert('Please select an Excel file first.');
             return;
         }
 
@@ -70,6 +76,10 @@ document.addEventListener('DOMContentLoaded', () => {
             return keywords.every(keyword => description.includes(keyword) || clientName.includes(keyword));
         });
 
+        displayResults(searchResults);
+    });
+
+    function displayResults(searchResults) {
         results.innerHTML = `
             <table>
                 <thead>
@@ -115,5 +125,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             });
         });
-    });
+    }
+
+    function displayError(message) {
+        error.textContent = message;
+        error.style.display = 'block';
+        loading.style.display = 'none';
+    }
 });
