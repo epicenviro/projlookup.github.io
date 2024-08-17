@@ -3,15 +3,28 @@ document.addEventListener('DOMContentLoaded', () => {
     const searchInput = document.getElementById('searchInput');
     const searchButton = document.getElementById('searchButton');
     const results = document.getElementById('results');
+    const loading = document.getElementById('loading');
+    const error = document.getElementById('error');
 
     const GOOGLE_SHEET_ID = '1fqHopVL2NPslUZ-_jKErXsbVO_IntUGG';
-    const GOOGLE_SHEET_URL = `https://docs.google.com/spreadsheets/d/${GOOGLE_SHEET_ID}/gviz/tq?tqx=out:csv`;
+    const CORS_PROXY = "https://cors-anywhere.herokuapp.com/";
+    const GOOGLE_SHEET_URL = `${CORS_PROXY}https://docs.google.com/spreadsheets/d/${GOOGLE_SHEET_ID}/export?format=csv`;
 
     let workbook = null;
 
     // Load the Google Sheet
+    loading.style.display = 'block';
     fetch(GOOGLE_SHEET_URL)
-        .then(response => response.text())
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            const contentType = response.headers.get("content-type");
+            if (contentType && contentType.includes("text/html")) {
+                throw new Error("Received HTML instead of CSV. The spreadsheet might not be accessible.");
+            }
+            return response.text();
+        })
         .then(data => {
             workbook = XLSX.read(data, {type: 'string'});
             
@@ -29,6 +42,14 @@ document.addEventListener('DOMContentLoaded', () => {
             if (projectLogSheets.length > 0) {
                 sheetSelect.value = projectLogSheets[projectLogSheets.length - 1];
             }
+
+            loading.style.display = 'none';
+        })
+        .catch(e => {
+            console.error("There was a problem fetching the spreadsheet data:", e);
+            error.textContent = "There was a problem loading the data. Please try again later.";
+            error.style.display = 'block';
+            loading.style.display = 'none';
         });
 
     searchButton.addEventListener('click', () => {
