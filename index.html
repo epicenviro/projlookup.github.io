@@ -5,22 +5,28 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Epic Project Lookup</title>
     <link rel="stylesheet" href="styles.css">
-    <!-- Add a unique query parameter to force a fresh load of the CSS file -->
-    <link rel="stylesheet" href="styles.css?v=1.0">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.16.9/xlsx.full.min.js"></script>
+    <script src="script.js" defer></script>
 </head>
 <body>
     <div class="container">
         <h1>Epic Project Lookup</h1>
+        
         <input type="file" id="fileInput" accept=".xlsx, .xls">
+        <button id="fileButton">Load File</button>
+        
+        <div id="fileInfo" style="display: none;">
+            <p>File loaded: <span id="fileName"></span></p>
+            <p>Last updated: <span id="lastUpdated"></span></p>
+        </div>
+
         <select id="sheetSelect" style="display: none;"></select>
-        <input type="text" id="searchInput" placeholder="Enter search keywords" style="display: none;">
+        <input type="text" id="searchInput" placeholder="Search" style="display: none;">
         <button id="searchButton" style="display: none;">Search</button>
+
         <div id="results"></div>
-        <div id="loading" style="display:none;">Loading data...</div>
-        <div id="error" style="display:none; color: red;"></div>
+        <div id="loading" style="display: none;">Loading data...</div>
+        <div id="error" style="display: none; color: red;"></div>
     </div>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-    <!-- Add a unique query parameter to force a fresh load of the JS file -->
-    <script src="script.js?v=1.0"></script>
 </body>
 </html>
