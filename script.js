@@ -134,7 +134,7 @@ document.addEventListener('DOMContentLoaded', () => {
                                 <div class="details">
                                     <p><strong>Client ID:</strong> ${row[4]}</p>
                                     <p><strong>Client Contact:</strong> ${row[5]}</p>
-                                    <p><strong>Proposal 3:</strong> ${row[6]}</p>
+                                    <p><strong>Proposal #:</strong> ${row[6]}</p>
                                     <p><strong>PO #:</strong> ${row[7]}</p>
                                     <p><strong>Amount Charged:</strong> ${row[8]}</p>
                                     <p><strong>Award Date:</strong> ${row[10]}</p>
