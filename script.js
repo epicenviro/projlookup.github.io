@@ -2,7 +2,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const fileInput = document.getElementById('fileInput');
     const fileButton = document.getElementById('fileButton');
     const fileInfo = document.getElementById('fileInfo');
-    const fileName = document.getElementById('fileName');
     const lastUpdated = document.getElementById('lastUpdated');
     const sheetSelect = document.getElementById('sheetSelect');
     const searchInput = document.getElementById('searchInput');
@@ -17,7 +16,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const cachedData = localStorage.getItem('excelData');
     if (cachedData) {
         workbook = XLSX.read(cachedData, { type: 'base64' });
-        updateFileInfo(localStorage.getItem('fileName'), localStorage.getItem('lastUpdated'));
+        updateFileInfo(localStorage.getItem('lastUpdated'));
         populateSheetSelect(workbook);
         showSearchElements();
     }
@@ -38,11 +37,10 @@ document.addEventListener('DOMContentLoaded', () => {
                     
                     // Cache the data
                     localStorage.setItem('excelData', XLSX.write(workbook, { bookType: 'xlsx', type: 'base64' }));
-                    localStorage.setItem('fileName', file.name);
                     const now = new Date().toLocaleString();
                     localStorage.setItem('lastUpdated', now);
                     
-                    updateFileInfo(file.name, now);
+                    updateFileInfo(now);
                     populateSheetSelect(workbook);
                     showSearchElements();
                     loading.style.display = 'none';
@@ -59,8 +57,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    function updateFileInfo(name, date) {
-        fileName.textContent = name;
+    function updateFileInfo(date) {
         lastUpdated.textContent = date;
         fileInfo.style.display = 'block';
         fileButton.textContent = 'Update/New File';
